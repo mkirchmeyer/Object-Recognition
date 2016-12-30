@@ -10,7 +10,7 @@ from pycocotools.coco import COCO
 # Load image names through COCO API
 print("Loading image names")
 dataDir = '/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/coco-master/'
-dataType = 'train2014'
+dataType = 'val2014'
 annFile = '%sannotations/instances_%s.json' % (dataDir, dataType)
 coco = COCO(annFile)
 imgs = coco.loadImgs(coco.getImgIds())
@@ -24,7 +24,7 @@ print("Defining CNN variables")
 projectDir = '/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/'
 model_prototxt = projectDir + 'VGG_ILSVRC_19_layers_deploy.prototxt'
 model_trained = projectDir + 'VGG_ILSVRC_19_layers.caffemodel'
-mean_path = project_dir + 'caffe-home/caffe/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+mean_path = projectDir + 'caffe-home/caffe/python/caffe/imagenet/ilsvrc_2012_mean.npy'
 layer_name = 'fc8'
 
 # Loading the Caffe model, setting preprocessing parameters
