@@ -68,4 +68,4 @@ def CCA(imgFeatures,wordFeatures):
     S, SD = computeCovarianceMatrix(features)
 
     #
-    runCCA(S, SD, 128, 1e-4, 4)
+    runCCA(S, SD, 128, 1e-4)
