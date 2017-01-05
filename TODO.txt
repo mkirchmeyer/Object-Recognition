@@ -1,0 +1,1 @@
+test the performance on a word2vec trained on a dataset particular to COCO, and a general one
