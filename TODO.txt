@@ -5,3 +5,5 @@ test the performance on a word2vec trained on a dataset particular to COCO, and 
 http://scikit-learn.org/stable/modules/generated/sklearn.cross_decomposition.CCA.html
 - for glove description:
 http://nlp.stanford.edu/projects/glove/
+We assume word vector representation regularity (King - Man + Woman = Queen)
+https://blog.acolyer.org/2016/04/21/the-amazing-power-of-word-vectors/
