@@ -26,38 +26,28 @@ def id2tag(coco,ids):
         result[idx] = strings
     return result
 
-def evaluateROC(coco,tag2img,imgs_test):
+def evaluateROC(coco,tag2img,GT):
     # coco is the COCO API instance that was constructed from the categories .json
     # tag2img is the function returning the scores on the test images
     # imgs_test are the coco images on which evaluation is performed
-    # (be careful, the ids returned by tag2img and imgs_test have to be corresponding) 
+    # (be careful, the ids returned by tag2img and imgs_test have to be corresponding)
     # loop over possible category tags of the coco API instance
     # why not put them all in a same object named imgQueryObject
-    
-    ids = np.zeros(len(imgs_test))
-    for k in range(len(imgs_test)):
-        ids[k] = imgs_test[k]['id']
-    #ids = []
-    #for img in imgs_test:
-    #    ids.append(img['id'])
-
-    GT = id2tag(coco,ids) # ground truth tags per image index
-
     cats = coco.loadCats(coco.getCatIds())
 
     precision_array = np.zeros(len(thr_array))
     recall_array = np.zeros(len(thr_array))
-    
+
     # loop over possible queries
     for k in range(len(cats)):
         cat = cats[k]
         query = cat['name']
         result = tag2img(query) # dictionnary id:score
         normalize_output(result)
-        
+
         pos_array = np.zeros(len(thr_array))
         true_pos_array = np.zeros(len(thr_array))
-        
+
         for thr in thr_array:
             filtered_result = {idx: score for idx, score in result.iteritems() if score > thr}
             for idx in filtered_result.keys():
@@ -84,14 +74,13 @@ def evaluateROC(coco,tag2img,imgs_test):
 
 #    GT = id2tag(coco,ids) # ground truth tags per image index
 
-    
 
 def computeAP(precision_array, recall_array):
     assert precision_array.shape == recall.array.shape, "in compute AP, shape mismatch"
-    
+
     result = 0
     for k in range(len(precision_array)-1):
         result += precision_array[k] * (recall_array[k+1] - recall_array[k])
     assert result <= 1 and result >= 0, "in computeAP, result non consistant"
-    
-    return result 
+
+    return result
