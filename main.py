@@ -89,9 +89,6 @@ def main():
             return T2I.tag2image(tag,cca_object,glove_object,test_img)
         precision, recall, mAP = evaluate.evaluateROCT2I(coco,t2i,GT)
     elif method == 'I2T':
-        """
-        Complete GT and debug
-        """
         # get coco test tags ground truth categories
         GT = evaluate.id2tag(coco,ids)
         print "creating cnn instance"

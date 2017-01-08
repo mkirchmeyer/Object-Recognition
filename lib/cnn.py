@@ -2,7 +2,7 @@ import numpy as np
 import os
 os.environ['GLOG_minloglevel'] = '2' # only keep warning messages
 import sys
-sys.path.append("../caffe-home/caffe/build/install/python") # path to caffe
+sys.path.append("/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/caffe-home/caffe/build/install/python") # path to caffe
 import caffe
 
 class cnn():
