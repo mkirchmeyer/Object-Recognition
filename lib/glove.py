@@ -30,4 +30,3 @@ class glove():
         if n_words == 0:
             raise NameError('\'%s\' not in glove dictionnary' % expression)
         return output
-

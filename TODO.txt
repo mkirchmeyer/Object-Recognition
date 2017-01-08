@@ -1,6 +1,7 @@
 test the performance on a word2vec trained on a dataset particular to COCO, and a general one
 
-
+- for Caffe description:
+http://caffe.berkeleyvision.org/
 - for CCA description:
 http://scikit-learn.org/stable/modules/generated/sklearn.cross_decomposition.CCA.html
 - for glove description:

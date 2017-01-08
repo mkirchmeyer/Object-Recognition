@@ -4,7 +4,7 @@ import glove
 import cca
 import numpy as np
 
-dataDir ='~/coco/images/'
+#dataDir ='~/coco/images/'
 dataDir = '../coco-master/images/'
 dataType = 'val2014'
 
@@ -28,6 +28,15 @@ def search_img(img_feat,img_feats):
         output[key] = np.dot(img_feat_tmp,img_feats_tmp)
     return output
 
+def search_tag(tag_feat,tag_feats):
+    output = {}
+    for key in tag_feats.keys():
+        # need to normalize the vectors
+        tag_feat_tmp = tag_feat.copy() / np.linalg.norm(tag_feat)
+        tag_feats_tmp = tag_feats[key].copy() / np.linalg.norm(tag_feats[key])
+
+        output[key] = np.dot(tag_feat_tmp,tag_feats_tmp)
+    return output
 
 def tag2image(tag, cca_object, glove_object, test_img_feat):
     # retrieve the tag vector
@@ -41,3 +50,14 @@ def tag2image(tag, cca_object, glove_object, test_img_feat):
 
     return scores
 
+def image2tag(imgName, cca_object, cnn_object, test_tag_feat):
+    # retrieve the image feature vector
+    img_vector,_,_,_ = cnn_object.extractFeatures(imgName)
+
+    # predict with CCA
+    tag_vector = cca_object.predict(img_vector)
+
+    # search tag
+    scores = search_tag(tag_vector,test_tag_feat)
+
+    return scores
