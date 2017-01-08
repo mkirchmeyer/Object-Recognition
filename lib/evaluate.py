@@ -1,7 +1,7 @@
 import numpy as np
 import sys
-#sys.path.append('/home/struong/Documents/MVA/S1/coco/PythonAPI/')
-sys.path.append('/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/coco-master/PythonAPI/')
+sys.path.append('/home/struong/Documents/MVA/S1/coco/PythonAPI/')
+#sys.path.append('/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/coco-master/PythonAPI/')
 from pycocotools.coco import COCO
 
 # threshold sampling
