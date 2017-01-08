@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+sys.path.append('/home/struong/Documents/MVA/S1/coco/PythonAPI/')
 from pycocotools.coco import COCO
 
 # threshold sampling
@@ -8,10 +9,25 @@ thr_array = np.linspace(0,1,100)
 # input is a dictionary id:score
 def normalize_output(scores):
     total = 0
-    for key in scores.keys():
-        total += scores[key]
+    for value in scores.values():
+        total += value
     for key in scores.keys():
         scores[key] /= float(total)
+
+def spread(scores):
+    maxi = max(scores.values())
+    mini = min(scores.values())
+    for key in scores.keys():
+        scores[key] = (scores[key] - mini) / float(maxi-mini)
+
+def softmax(scores):
+    # scores is a dict {id:score}
+    somme = 0
+    for key in scores.keys():
+        scores[key] = np.exp(scores[key])
+        somme += scores[key]
+    for key in scores.keys():
+        scores[key] /= float(somme)
 
 def id2tag(coco,ids):
     # returns dict id:str_array
@@ -33,36 +49,53 @@ def evaluateROC(coco,tag2img,GT):
     # (be careful, the ids returned by tag2img and imgs_test have to be corresponding)
     # loop over possible category tags of the coco API instance
     # why not put them all in a same object named imgQueryObject
+    precision = {}
+    recall = {}
+    mAP = {}
+
     cats = coco.loadCats(coco.getCatIds())
 
     precision_array = np.zeros(len(thr_array))
     recall_array = np.zeros(len(thr_array))
 
     # loop over possible queries
+    counter = 0
     for k in range(len(cats)):
         cat = cats[k]
         query = cat['name']
+
+        print "\r>> Computing retrieval statistics for \'%s\' (%d/%d)               " % (query,k,len(cats)) ,
+        sys.stdout.flush()
+
+
+        # check images of this instance exist in the test set
+        if not len({idx:categories for idx, categories in GT.iteritems() if (query in categories)}):
+            print "no \'%s\' images in test set" % query
+            continue
+
         result = tag2img(query) # dictionnary id:score
-        normalize_output(result)
+        softmax(result)
+        spread(result)
 
         pos_array = np.zeros(len(thr_array))
         true_pos_array = np.zeros(len(thr_array))
 
-        for thr in thr_array:
-            filtered_result = {idx: score for idx, score in result.iteritems() if score > thr}
+        for thr_index in range(len(thr_array)):
+            thr = thr_array[thr_index]
+            filtered_result = {idx: score for idx, score in result.iteritems() if score >= thr}
             for idx in filtered_result.keys():
-                pos_array[thr] += 1
+                pos_array[thr_index] += 1
                 if query in GT[idx]:
-                    true_pos_array[thr] += 1
+                    true_pos_array[thr_index] += 1
 
-        precision_array = precision_array + true_pos_array / pos_array
-        recall_array = recall_array + true_pos_array / len({idx:categories from idx, categories in GT/iteritems() if (query in categories)})
-
+        precision[query] = true_pos_array / pos_array
+        recall[query] = true_pos_array / len({idx:categories for idx, categories in GT.iteritems() if (query in categories)})
+        mAP[query] = computeAP(precision[query],recall[query])
+        counter += 1
+    print '\nComputed all queries!'
     # take the mean of all ROC curves over all possible queries
-    precision_array = precision_array / len(cats)
-    recall_array = recall_array / len(cats)
 
-    return precision_array, recall_array
+    return precision, recall, mAP
 
 #def top_five_precision(coco,tag2Img,imgs_test):
 #    ids = np.zeros(len(imgs_test))
@@ -76,11 +109,11 @@ def evaluateROC(coco,tag2img,GT):
 
 
 def computeAP(precision_array, recall_array):
-    assert precision_array.shape == recall.array.shape, "in compute AP, shape mismatch"
+    assert precision_array.shape == recall_array.shape, "in compute AP, shape mismatch"
 
     result = 0
     for k in range(len(precision_array)-1):
-        result += precision_array[k] * (recall_array[k+1] - recall_array[k])
+        result += precision_array[k] * (recall_array[k]-recall_array[k+1])
     assert result <= 1 and result >= 0, "in computeAP, result non consistant"
 
     return result

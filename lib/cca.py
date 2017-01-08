@@ -1,14 +1,20 @@
 from sklearn.cross_decomposition import CCA
+import numpy as np
 
 class cca():
     def __init__(self,img_features, word_features,n_components):
         self.cca = CCA(n_components)
-        cat_feat = word_features.values()
-        img_feat = img_features.values()
-        (self.cca).fit(img_feat, cat_feat)
+        cat_feat = np.array(word_features.values())
+        img_feat = np.array(img_features.values())
+
+        print 'checking dimensions'
+        print cat_feat.shape
+        print img_feat.shape
+
+        (self.cca).fit(cat_feat,img_feat)
 
     def predict(self,word_vector):
-        return self.cca.predict(word_vector)
+        return self.cca.predict(word_vector.reshape(1,-1))
 """
 Example of CCA
 
