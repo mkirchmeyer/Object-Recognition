@@ -3,15 +3,15 @@ from lib import cca
 from lib import T2I
 from lib import evaluate
 from lib import glove
-#from lib import cnn
+from lib import cnn
 import argparse
 import matplotlib.pyplot as plt
 import os
 import operator
 # need to specify path to COCO and import pycocotools
 import sys
-sys.path.append('~/S1/coco/PythonAPI/')
-#sys.path.append("./coco-master/PythonAPI/")
+#sys.path.append('~/S1/coco/PythonAPI/')
+sys.path.append("./coco-master/PythonAPI/")
 from pycocotools.coco import COCO
 
 def parseArguments():
@@ -92,7 +92,7 @@ def main():
             return T2I.tag2image(tag,cca_object,glove_object,test_img)
         precision, recall, mAP = evaluate.evaluateROCT2I(coco,t2i,GT)
         print mAP
-        plot_curves(precision,recall,mAP,output_folder,title+'.eps',title=title)
+        plot_curves(precision,recall,mAP,output_folder,'Precision/Recall Curves T2I.eps',title=title)
     elif method == 'I2T':
         print "creating CCA instance"
         cca_object = cca.cca(train_word, train_img, 2)
@@ -103,10 +103,11 @@ def main():
         cnn_object = cnn.cnn()
         def i2t(img):
             return T2I.image2tag(img,cca_object,cnn_object,test_word, coco)
-        precision = evaluate.evaluatePrecisionI2T(coco,i2t,GT)
-        print precision
+        precision, recall, mAP = evaluate.evaluatePrecisionI2T(coco,i2t,GT)
+        print mAP
+        plot_curves(precision,recall,mAP,output_folder,'Precision/Recall Curves I2T.eps',title=title)
 
-def plot_curves(precision,recall,mAP,output_folder,output_name,title='Precision/Recall curves'):
+def plot_curves(precision,recall,mAP,output_folder,output_name,title):
     best_instances = dict(sorted(mAP.iteritems(), key=operator.itemgetter(1), reverse=True)[:5])
 
     if not os.path.exists(output_folder):

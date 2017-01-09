@@ -1,7 +1,7 @@
 import numpy as np
 import sys
-sys.path.append('/home/struong/Documents/MVA/S1/coco/PythonAPI/')
-#sys.path.append('/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/coco-master/PythonAPI/')
+#sys.path.append('/home/struong/Documents/MVA/S1/coco/PythonAPI/')
+sys.path.append('/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/coco-master/PythonAPI/')
 from pycocotools.coco import COCO
 
 # threshold sampling
@@ -78,9 +78,6 @@ def evaluateROCT2I(coco,tag2img,GT):
 
     cats = coco.loadCats(coco.getCatIds())
 
-    precision_array = np.zeros(len(thr_array))
-    recall_array = np.zeros(len(thr_array))
-
     # loop over possible queries
     counter = 0
     for k in range(len(cats)):
@@ -146,28 +143,30 @@ def evaluatePrecisionI2T(coco,img2tag,GT):
     # (be careful, the ids returned by img2tag and tags_test have to correspond)
     # loop over possible image names of the coco API instance
     precision = {}
+    recall = {}
+    mAP = {}
 
     imgs = coco.loadImgs(coco.getImgIds())
     imgsNames = [img['file_name'] for img in imgs]
     imgsIds = [img['id'] for img in imgs]
 
-    precision_array = np.zeros(len(thr_array))
-
     # loop over possible queries
     nb = 10
     i = 0
-    while i < nb:
-        k = np.random.randint(0,len(imgsIds))
+    #while i < nb:
+    for k in range(len(imgsIds)):
+        #k = np.random.randint(0,len(imgsIds))
         query = imgsIds[k]
 
-        print "\r>> Computing retrieval statistics for \'%s\' (%d/%d)               " % (query,i,nb),
+        #print "\r>> Computing retrieval statistics for \'%s\' (%d/%d)               " % (query,i,nb),
+        print "\r>> Computing retrieval statistics for \'%s\' (%d/%d)               " % (query,k,len(imgsIds)),
         sys.stdout.flush()
 
         # check if tags of this instance exist in the test set
         if not len({categories:idx for categories, idx in GT.iteritems() if (query in idx)}):
             continue
 
-        i += 1
+        #i += 1
         result = img2tag(imgsNames[k]) # dictionnary cat:score
         softmax(result)
         spread(result)
@@ -184,7 +183,9 @@ def evaluatePrecisionI2T(coco,img2tag,GT):
                     true_pos_array[thr_index] += 1
 
         precision[query] = true_pos_array / pos_array
+        recall[query] = true_pos_array / len({categories:idx for categories, idx in GT.iteritems() if (query in idx)})
+        mAP[query] = computeAP(precision[query],recall[query])
 
     print '\nComputed all queries!'
 
-    return precision
+    return precision, recall, mAP
