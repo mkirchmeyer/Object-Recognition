@@ -76,15 +76,13 @@ def main():
     test_word = np.load(path_to_test_word_feat).item()
     test_img = np.load(path_to_test_img_feat).item()
 
-    print "creating CCA instance"
-    cca_object = cca.cca(train_img, train_word, 2)
-
     # create COCO API instance
     coco = COCO(args.coco_json_annotation)
 
-    # test run on dummy tag
     print "running evaluation ..."
     if method == 'T2I':
+        print "creating CCA instance"
+        cca_object = cca.cca(train_img, train_word, 2)
         # get coco test images ground truth categories
         ids = test_img.keys()
         GT = evaluate.id2tag(coco,ids)
@@ -93,19 +91,20 @@ def main():
         def t2i(tag):
             return T2I.tag2image(tag,cca_object,glove_object,test_img)
         precision, recall, mAP = evaluate.evaluateROCT2I(coco,t2i,GT)
+        print mAP
+        plot_curves(precision,recall,mAP,output_folder,title+'.eps',title=title)
     elif method == 'I2T':
-        # get coco test tags ground truth categories
-        GT = evaluate.id2tag(coco,ids)
+        print "creating CCA instance"
+        cca_object = cca.cca(train_word, train_img, 2)
+        # get coco test images ground truth categories
+        ids = test_word.keys()
+        GT = evaluate.tag2id(coco,ids)
         print "creating cnn instance"
         cnn_object = cnn.cnn()
         def i2t(img):
-            return T2I.image2tag(img,cca_object,cnn_object,test_word)
-        precision, recall, mAP = evaluate.evaluateROCI2T(coco,i2t,GT)
-
-    plot_curves(precision,recall,mAP,output_folder,title+'.eps',title=title)
-
-    #title = "Img feature: %s, Cat feature: %s, mAP: %.2f" % (path_to_test_img_feat.split('_')[0], path_to_test_word_feat.split('_')[0],mAP)
-    #plot_ROC(precision, recall, title, output_folder)
+            return T2I.image2tag(img,cca_object,cnn_object,test_word, coco)
+        precision = evaluate.evaluatePrecisionI2T(coco,i2t,GT)
+        print precision
 
 def plot_curves(precision,recall,mAP,output_folder,output_name,title='Precision/Recall curves'):
     best_instances = dict(sorted(mAP.iteritems(), key=operator.itemgetter(1), reverse=True)[:5])
