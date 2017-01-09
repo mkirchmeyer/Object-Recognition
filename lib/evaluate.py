@@ -43,6 +43,28 @@ def id2tag(coco,ids):
         result[idx] = strings
     return result
 
+def tag2id(coco,ids):
+    # returns dict cat:str_array of id
+    result = {}
+    cats = []
+    for idx in ids:
+        annIds = coco.getAnnIds(imgIds=idx)
+        anns = coco.loadAnns(annIds)
+        for ann in anns:
+            instance = coco.loadCats(ann['category_id'])[0]['name']
+            cats.append(instance)
+    cats = np.unique(cats)
+    for cat in cats:
+        catId = coco.getCatIds(catNms = cat)
+        imIds = coco.getImgIds(catIds = catId)
+        strings = []
+        for imId in imIds:
+            if imId in ids:
+                instance = coco.loadImgs(imId)[0]['id']
+                strings.append(instance)
+        result[cat] = strings
+    return result
+
 def evaluateROCT2I(coco,tag2img,GT):
     # coco is the COCO API instance that was constructed from the categories .json
     # tag2img is the function returning the scores on the test images
