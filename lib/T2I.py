@@ -12,9 +12,9 @@ def display_top_img(tag, score_dict, number):
 #Display top number images
     ids = score_dict.keys()
     score = score_dict.values()
-    index = np.argpartition(score,-number)[-number:]
-    for i in range(len(index),-1):
-        I = io.imread(dataDir + dataType + '/COCO_' + dataType + '_%012d' % ids[index[i]] + '.jpg')
+    index = np.argsort(score)
+    for i in range(number):
+        I = io.imread(dataDir + dataType + '/COCO_' + dataType + '_%012d' % ids[index[len(index)-i-1]] + '.jpg')
         nb = i + 1
         io.imsave('output/' + tag + '_top%d' %nb, I)
 
@@ -22,11 +22,10 @@ def display_top_tag(score_dict, number):
     #Display top number tags
     cats = score_dict.keys()
     score = score_dict.values()
-    print score
-    index = np.argpartition(score,-number)[-number:]
-    print("Top %d tags retrived from image" %number)
-    for i in range(len(index)):
-        print(cats[index[i]] + ' %d' % score[index[i]])
+    index = np.argsort(score)
+    print("Top %d tags retrieved from image" %number)
+    for i in range(number):
+        print(cats[index[len(index)-1-i]] + ' %f' % score[index[len(index)-1-i]])
 
 def search_img(img_feat,img_feats):
     output = {}
