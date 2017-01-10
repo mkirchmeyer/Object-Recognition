@@ -80,11 +80,7 @@ def image2tag_qualitative(image_path, cca_object, cnn_object, test_tag_feat, coc
 
     return scores
 
-
-def image2tag_quantitative(imgName, cca_object, cnn_object, test_tag_feat, coco):
-    # retrieve the image feature vector
-    img_vector,_,_,_ = cnn_object.extractFeatures(imgName)
-
+def image2tag_quantitative(img_vector, cca_object, test_tag_feat, coco):
     # predict with CCA
     tag_vector = cca_object.predict(img_vector)
 
