@@ -1,12 +1,12 @@
 #!/bin/bash
 annotations='data/annotations/instances_val2014.json'
-main='main.py'
+main='retrieve.py'
 
 
-size_word_vec=('300' '50' '100' '200')
-#size_word_vec=('300')
-mode_word_vec=('area' 'max')
-layer=('fc6' 'fc7' 'fc8' 'prob')
+#size_word_vec=('50' '100' '200')
+size_word_vec=('300')
+mode_word_vec=('max')
+layer=('fc6')
 #layer=('prob')
 
 output_dir='output'
@@ -30,7 +30,7 @@ do
             echo '------------------------------'
             echo 'word_feature_'$size_word'd_'$mode_word'_|_img_feature_'$lay
             echo '------------------------------'
-            python $main $method $train_img_feat $train_word_feat $test_img_feat $test_word_feat $glove $annotations -t $title
+            python $main $train_img_feat $train_word_feat $test_img_feat $test_word_feat $glove $annotations -t $title
 		done	
 	done
 done	
