@@ -3,9 +3,17 @@ import sys
 #sys.path.append('/home/struong/Documents/MVA/S1/coco/PythonAPI/')
 sys.path.append('/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/coco-master/PythonAPI/')
 from pycocotools.coco import COCO
+import skimage.io as io
+import operator
+import os
+import matplotlib.pyplot as plt
+from shutil import copyfile
+
+dataType = 'val2014'
+dataPath = '/home/struong/Documents/MVA/S1/coco/'
 
 # threshold sampling
-thr_array = np.linspace(0,1,100)
+thr_array = np.linspace(0,1,500)
 
 # input is a dictionary id:score
 def normalize_output(scores):
@@ -42,6 +50,31 @@ def id2tag(coco,ids):
             strings.append(instance)
         result[idx] = strings
     return result
+
+def retrieve(tag2img,file_id_dict,query,output_folder): # and display
+    result = tag2img(query) # dictionnary id:score
+    softmax(result)
+    spread(result)
+    best_images = sorted(result.iteritems(), key=operator.itemgetter(1), reverse=True)[:10]
+    fig = plt.figure()
+    plt.title(query)
+    plt.axis('off')
+
+    output_path = os.path.join(output_folder,query)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    for i in range(len(best_images)):
+        # a = fig.add_subplot(2,5,i+1)
+        # plt.axis('off')
+        # I = io.imread(dataPath + 'images/' + dataType + '/' + file_id_dict[best_images[i][0]])
+        # plt.imshow(I)
+        # plt.tight_layout()
+        copyfile(dataPath + 'images/' + dataType + '/' + file_id_dict[best_images[i][0]],os.path.join(output_path,file_id_dict[best_images[i][0]]))
+    # plt.tight_layout()
+    # plt.savefig(os.path.join(output_folder,"%s.png"%query))
+    # print "Figure saved at: "+os.path.join(output_folder,"%s.png"%query)
+    return
 
 def tag2id(coco,ids):
     # returns dict cat:str_array of id

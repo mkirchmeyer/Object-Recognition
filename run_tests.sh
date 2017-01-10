@@ -35,9 +35,10 @@
 
 #!/bin/bash
 
-size_word_vec='100'
-mode_word_vec='max'
-layer='fc6'
+size_word_vec=('300' '50' '100' '200')
+#size_word_vec=('300')
+mode_word_vec=('area' 'max')
+layer=('fc6' 'fc7' 'fc8' 'prob')
 
 output_dir='output'
 
