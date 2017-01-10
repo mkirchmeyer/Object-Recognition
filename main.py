@@ -3,15 +3,15 @@ from lib import cca
 from lib import T2I
 from lib import evaluate
 from lib import glove
-#from lib import cnn
+from lib import cnn
 import argparse
 import matplotlib.pyplot as plt
 import os
 import operator
 # need to specify path to COCO and import pycocotools
 import sys
-sys.path.append('~/S1/coco/PythonAPI/')
-#sys.path.append("./coco-master/PythonAPI/")
+#sys.path.append('~/S1/coco/PythonAPI/')
+sys.path.append("./coco-master/PythonAPI/")
 from pycocotools.coco import COCO
 
 def parseArguments():
@@ -46,8 +46,8 @@ def parseArguments():
     # parser.add_argument("-t",
     #     type=str, help="input tag")
 
-    # parser.add_argument("-i",
-    #    type=str, help="input image path")
+    parser.add_argument("-i",
+        type=str, help="input image path")
 
     args = parser.parse_args()
     return args
@@ -63,6 +63,11 @@ def main():
     output_folder = args.o
     title = args.t
 
+    if args.i is None:
+        query_image_path = "empty"
+    else:
+        query_image_path = args.i
+
     if title is None:
         title = "Precision/Recall"
     if output_folder is None:
@@ -76,15 +81,13 @@ def main():
     test_word = np.load(path_to_test_word_feat).item()
     test_img = np.load(path_to_test_img_feat).item()
 
-    print "creating CCA instance"
-    cca_object = cca.cca(train_img, train_word, 2)
-
     # create COCO API instance
     coco = COCO(args.coco_json_annotation)
 
-    # test run on dummy tag
     print "running evaluation ..."
     if method == 'T2I':
+        print "creating CCA instance"
+        cca_object = cca.cca(train_img, train_word, 2)
         # get coco test images ground truth categories
         ids = test_img.keys()
         GT = evaluate.id2tag(coco,ids)
@@ -93,21 +96,26 @@ def main():
         def t2i(tag):
             return T2I.tag2image(tag,cca_object,glove_object,test_img)
         precision, recall, mAP = evaluate.evaluateROCT2I(coco,t2i,GT)
+        print mAP
+        plot_curves(precision,recall,mAP,output_folder,'Precision/Recall Curves T2I.eps',title=title)
     elif method == 'I2T':
-        # get coco test tags ground truth categories
-        GT = evaluate.id2tag(coco,ids)
-        print "creating cnn instance"
-        cnn_object = cnn.cnn()
-        def i2t(img):
-            return T2I.image2tag(img,cca_object,cnn_object,test_word)
-        precision, recall, mAP = evaluate.evaluateROCI2T(coco,i2t,GT)
+        print "creating CCA instance"
+        cca_object = cca.cca(train_word, train_img, 2)
+        # get coco test images ground truth categories
+        if query_image_path == "empty":
+            ids = test_word.keys()
+            GT = evaluate.tag2id(coco,ids)
+            def i2t(img_vector):
+                return T2I.image2tag_quantitative(img_vector,cca_object,test_word,coco)
+            precision = evaluate.evaluatePrecisionI2T(coco,i2t,test_img,GT)
+            print precision
+        else:
+            print "creating cnn instance"
+            cnn_object = cnn.cnn()
+            result = T2I.image2tag_qualitative(query_image_path,cca_object,cnn_object,test_word, coco)
+            T2I.display_top_tag(result, 5)
 
-    plot_curves(precision,recall,mAP,output_folder,title+'.eps',title=title)
-
-    #title = "Img feature: %s, Cat feature: %s, mAP: %.2f" % (path_to_test_img_feat.split('_')[0], path_to_test_word_feat.split('_')[0],mAP)
-    #plot_ROC(precision, recall, title, output_folder)
-
-def plot_curves(precision,recall,mAP,output_folder,output_name,title='Precision/Recall curves'):
+def plot_curves(precision,recall,mAP,output_folder,output_name,title):
     best_instances = dict(sorted(mAP.iteritems(), key=operator.itemgetter(1), reverse=True)[:5])
 
     if not os.path.exists(output_folder):
@@ -134,7 +142,6 @@ def plot_curves(precision,recall,mAP,output_folder,output_name,title='Precision/
 
     plt.savefig(os.path.join(output_folder,output_name))
     print "Figure saved at %s" % os.path.join(output_folder,output_name)
-
 
 def plot_ROC(precision,recall,title='ROC',output_folder='output',output_name='figure'):
     plt.figure()
