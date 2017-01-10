@@ -105,9 +105,10 @@ def main():
         if query_image_path == "empty":
             ids = test_word.keys()
             GT = evaluate.tag2id(coco,ids)
-            precision, recall, mAP = evaluate.evaluatePrecisionI2T(coco,i2t,GT)
-            print mAP
-            plot_curves(precision,recall,mAP,output_folder,'Precision/Recall Curves I2T.eps',title=title)
+            def i2t(img_vector):
+                return T2I.image2tag_quantitative(img_vector,cca_object,test_word,coco)
+            precision = evaluate.evaluatePrecisionI2T(coco,i2t,test_img,GT)
+            print precision
         else:
             print "creating cnn instance"
             cnn_object = cnn.cnn()
@@ -141,7 +142,6 @@ def plot_curves(precision,recall,mAP,output_folder,output_name,title):
 
     plt.savefig(os.path.join(output_folder,output_name))
     print "Figure saved at %s" % os.path.join(output_folder,output_name)
-
 
 def plot_ROC(precision,recall,title='ROC',output_folder='output',output_name='figure'):
     plt.figure()

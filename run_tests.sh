@@ -41,12 +41,16 @@ layer='fc6'
 
 output_dir='output'
 
-method='T2I'
+method='I2T'
+#train_img_feat='data/img_feat/'$layer'_train_big.npy'
+#train_word_feat='data/cat_feat/'$mode_word_vec'_'$size_word_vec'_train_big.npy'
+#test_img_feat='data/img_feat/'$layer'_test_big.npy'
+#test_word_feat='data/cat_feat/'$mode_word_vec'_'$size_word_vec'_test_big.npy'
 train_img_feat='data/img_feat/'$layer'_train_small.npy'
 train_word_feat='data/cat_feat/'$mode_word_vec'_'$size_word_vec'_train_small.npy'
 test_img_feat='data/img_feat/'$layer'_test_small.npy'
 test_word_feat='data/cat_feat/'$mode_word_vec'_'$size_word_vec'_test_small.npy'
-#query_image_path='query/bear.png'
+#query_image_path='query/pizza.jpeg'
 
 glove='data/glove.6B/glove.6B.'$size_word_vec'd.txt'
 annotations='data/annotations/instances_val2014.json'

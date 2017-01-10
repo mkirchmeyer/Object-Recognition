@@ -136,29 +136,22 @@ def computeAP(precision_array, recall_array):
 
     return result
 
-def evaluatePrecisionI2T(coco,img2tag,GT):
+def evaluatePrecisionI2T(coco,img2tag,test_img,GT):
     # coco is the COCO API instance that was constructed from the categories .json
     # img2tag is the function returning the scores on the test tags
     # tags_test are the coco tags on which evaluation is performed
     # (be careful, the ids returned by img2tag and tags_test have to correspond)
     # loop over possible image names of the coco API instance
     precision = {}
-    recall = {}
-    mAP = {}
 
     imgs = coco.loadImgs(coco.getImgIds())
     imgsNames = [img['file_name'] for img in imgs]
     imgsIds = [img['id'] for img in imgs]
 
     # loop over possible queries
-    nb = 10
-    i = 0
-    #while i < nb:
     for k in range(len(imgsIds)):
-        #k = np.random.randint(0,len(imgsIds))
         query = imgsIds[k]
 
-        #print "\r>> Computing retrieval statistics for \'%s\' (%d/%d)               " % (query,i,nb),
         print "\r>> Computing retrieval statistics for \'%s\' (%d/%d)               " % (query,k,len(imgsIds)),
         sys.stdout.flush()
 
@@ -166,28 +159,31 @@ def evaluatePrecisionI2T(coco,img2tag,GT):
         if not len({categories:idx for categories, idx in GT.iteritems() if (query in idx)}):
             continue
 
-        #i += 1
-        result = image2tag_quantitative(imgsNames[k]) # dictionnary cat:score
-        softmax(result)
-        spread(result)
+        result = img2tag(test_img[query]) # dictionnary cat:score
 
         pos_array = np.zeros(len(thr_array))
         true_pos_array = np.zeros(len(thr_array))
 
-        for thr_index in range(len(thr_array)):
-            thr = thr_array[thr_index]
-            filtered_result = {cat: score for cat, score in result.iteritems() if score >= thr}
-            for cat in filtered_result.keys():
-                pos_array[thr_index] += 1
-                if query in GT[cat]:
-                    true_pos_array[thr_index] += 1
+        #Display top number tags
+        cats = result.keys()
+        score = result.values()
+        index = np.argsort(score)
+        top_cat = []
+        for i in range(10):
+            top_cat.append(cats[index[len(index)-1-i]])
 
-        precision[query] = true_pos_array / pos_array
-        recall[query] = true_pos_array / len({categories:idx for categories, idx in GT.iteritems() if (query in idx)})
-        mAP[query] = computeAP(precision[query],recall[query])
+        true_pos = 0
+        for cat in top_cat:
+            print "GT"
+            print GT[cat]
+            print "query"
+            print query
+            if query in GT[cat]:
+                true_pos += 1
+
+        precision[query] = true_pos / len(test_img)
 
         # esperance d'avoir le bon tag dans les 5 premiers scores precision top5 parcourir tous les imgaes test quand bon tage dans 5 premiers compte 1 sinon compte 0 somme / nb image. % precisoj dans top5
-        # 2000 grande base
     print '\nComputed all queries!'
 
-    return precision, recall, mAP
+    return precision
