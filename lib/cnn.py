@@ -24,13 +24,10 @@ class cnn():
         (self.transformer).set_channel_swap('data', (2, 1, 0))
         (self.transformer).set_raw_scale('data', 255.0)
 
-    def extractFeatures(self,imgName):
-        dataType = 'val2014'
-        dataDir = '/media/matthieu/Documents/2016_2017_3A_Mines_Paristech/MVA/Recvis/Project/coco-master/'
+    def extractFeatures(self,image_path):
         # Extract features
         print("Extract features")
         (self.net).blobs['data'].reshape(1, 3, 224, 224) # reshape network blob
-        image_path = dataDir + 'images/' + dataType + '/' + imgName
         (self.net).blobs['data'].data[...] = (self.transformer).preprocess('data', caffe.io.load_image(image_path)) # run the image through the preprocessor
         (self.net).forward() # run the image through the network
         imgFeaturesfc6 = (self.net).blobs['fc6'].data[0].copy()
@@ -38,5 +35,4 @@ class cnn():
         imgFeaturesfc8 = (self.net).blobs['fc8'].data[0].copy()
         imgFeaturesprob = (self.net).blobs['prob'].data[0].copy()
 
-        print("Returning features train")
         return imgFeaturesfc6, imgFeaturesfc7, imgFeaturesfc8, imgFeaturesprob # extract the feature vector from the layer of interest

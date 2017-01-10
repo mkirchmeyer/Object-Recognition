@@ -46,8 +46,8 @@ def parseArguments():
     # parser.add_argument("-t",
     #     type=str, help="input tag")
 
-    # parser.add_argument("-i",
-    #    type=str, help="input image path")
+    parser.add_argument("-i",
+        type=str, help="input image path")
 
     args = parser.parse_args()
     return args
@@ -62,6 +62,11 @@ def main():
     path_to_glove = args.path_to_glove
     output_folder = args.o
     title = args.t
+
+    if args.i is None:
+        query_image_path = "empty"
+    else:
+        query_image_path = args.i
 
     if title is None:
         title = "Precision/Recall"
@@ -97,15 +102,17 @@ def main():
         print "creating CCA instance"
         cca_object = cca.cca(train_word, train_img, 2)
         # get coco test images ground truth categories
-        ids = test_word.keys()
-        GT = evaluate.tag2id(coco,ids)
-        print "creating cnn instance"
-        cnn_object = cnn.cnn()
-        def i2t(img):
-            return T2I.image2tag(img,cca_object,cnn_object,test_word, coco)
-        precision, recall, mAP = evaluate.evaluatePrecisionI2T(coco,i2t,GT)
-        print mAP
-        plot_curves(precision,recall,mAP,output_folder,'Precision/Recall Curves I2T.eps',title=title)
+        if query_image_path == "empty":
+            ids = test_word.keys()
+            GT = evaluate.tag2id(coco,ids)
+            precision, recall, mAP = evaluate.evaluatePrecisionI2T(coco,i2t,GT)
+            print mAP
+            plot_curves(precision,recall,mAP,output_folder,'Precision/Recall Curves I2T.eps',title=title)
+        else:
+            print "creating cnn instance"
+            cnn_object = cnn.cnn()
+            result = T2I.image2tag_qualitative(query_image_path,cca_object,cnn_object,test_word, coco)
+            T2I.display_top_tag(result, 5)
 
 def plot_curves(precision,recall,mAP,output_folder,output_name,title):
     best_instances = dict(sorted(mAP.iteritems(), key=operator.itemgetter(1), reverse=True)[:5])

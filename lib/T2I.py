@@ -8,15 +8,25 @@ import numpy as np
 dataDir = '../coco-master/images/'
 dataType = 'val2014'
 
-def display_top(tag, score_dict, number):
+def display_top_img(tag, score_dict, number):
 #Display top number images
     ids = score_dict.keys()
     score = score_dict.values()
     index = np.argpartition(score,-number)[-number:]
-    for i in range(len(index)):
+    for i in range(len(index),-1):
         I = io.imread(dataDir + dataType + '/COCO_' + dataType + '_%012d' % ids[index[i]] + '.jpg')
         nb = i + 1
         io.imsave('output/' + tag + '_top%d' %nb, I)
+
+def display_top_tag(score_dict, number):
+    #Display top number tags
+    cats = score_dict.keys()
+    score = score_dict.values()
+    print score
+    index = np.argpartition(score,-number)[-number:]
+    print("Top %d tags retrived from image" %number)
+    for i in range(len(index)):
+        print(cats[index[i]] + ' %d' % score[index[i]])
 
 def search_img(img_feat,img_feats):
     output = {}
@@ -25,7 +35,7 @@ def search_img(img_feat,img_feats):
         img_feat_tmp = img_feat.copy() / np.linalg.norm(img_feat)
         img_feats_tmp = img_feats[key].copy() / np.linalg.norm(img_feats[key])
 
-        output[key] = np.dot(img_feat_tmp,img_feats_tmp)
+        output[key] = np.dot(img_feat_tmp,img_feats_tmp).item()
     return output
 
 def search_tag(tag_feat,tag_feats, coco):
@@ -44,7 +54,7 @@ def search_tag(tag_feat,tag_feats, coco):
         # need to normalize the vectors
         cat_feat_tmp = tag_feat.copy() / np.linalg.norm(tag_feat)
         cat_feats_tmp = cats[key].copy() / np.linalg.norm(cats[key])
-        output[key] = np.dot(cat_feat_tmp,cat_feats_tmp)
+        output[key] = np.dot(cat_feat_tmp,cat_feats_tmp).item()
     return output
 
 def tag2image(tag, cca_object, glove_object, test_img_feat):
@@ -59,7 +69,20 @@ def tag2image(tag, cca_object, glove_object, test_img_feat):
 
     return scores
 
-def image2tag(imgName, cca_object, cnn_object, test_tag_feat, coco):
+def image2tag_qualitative(image_path, cca_object, cnn_object, test_tag_feat, coco):
+    # retrieve the image feature vector
+    img_vector,_,_,_ = cnn_object.extractFeatures(image_path)
+
+    # predict with CCA
+    tag_vector = cca_object.predict(img_vector)
+
+    # search tag
+    scores = search_tag(tag_vector,test_tag_feat, coco)
+
+    return scores
+
+
+def image2tag_quantitative(imgName, cca_object, cnn_object, test_tag_feat, coco):
     # retrieve the image feature vector
     img_vector,_,_,_ = cnn_object.extractFeatures(imgName)
 

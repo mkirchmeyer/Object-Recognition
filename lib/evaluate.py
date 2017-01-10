@@ -167,7 +167,7 @@ def evaluatePrecisionI2T(coco,img2tag,GT):
             continue
 
         #i += 1
-        result = img2tag(imgsNames[k]) # dictionnary cat:score
+        result = image2tag_quantitative(imgsNames[k]) # dictionnary cat:score
         softmax(result)
         spread(result)
 
@@ -186,6 +186,8 @@ def evaluatePrecisionI2T(coco,img2tag,GT):
         recall[query] = true_pos_array / len({categories:idx for categories, idx in GT.iteritems() if (query in idx)})
         mAP[query] = computeAP(precision[query],recall[query])
 
+        # esperance d'avoir le bon tag dans les 5 premiers scores precision top5 parcourir tous les imgaes test quand bon tage dans 5 premiers compte 1 sinon compte 0 somme / nb image. % precisoj dans top5
+        # 2000 grande base
     print '\nComputed all queries!'
 
     return precision, recall, mAP
