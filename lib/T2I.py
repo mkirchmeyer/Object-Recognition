@@ -8,6 +8,15 @@ import numpy as np
 dataDir = '../coco-master/images/'
 dataType = 'val2014'
 
+def softmax(scores):
+    # scores is a dict {id:score}
+    somme = 0
+    for key in scores.keys():
+        scores[key] = np.exp(scores[key])
+        somme += scores[key]
+    for key in scores.keys():
+        scores[key] /= float(somme)
+
 def display_top_img(tag, score_dict, number):
 #Display top number images
     ids = score_dict.keys()
@@ -68,23 +77,55 @@ def tag2image(tag, cca_object, glove_object, test_img_feat):
 
     return scores
 
-def image2tag_qualitative(image_path, cca_object, cnn_object, test_tag_feat, coco):
+def perso_tag2image(tag, cca_object, glove_object, img_feats):
+    # retrieve the tag vector
+    tag_vector = glove_object.vec_expression(tag)
+
+    output = {}
+    for key in img_feats.keys():
+        output[key] = cca_object.sim(tag_vector,img_feats[key])
+
+    return output
+
+def perso_image2tag_qualitative(image_path, cca_object, cnn_object, test_tag_feat, coco):
     # retrieve the image feature vector
-    img_vector,_,_,_ = cnn_object.extractFeatures(image_path)
+    _,_,img_vector,_ = cnn_object.extractFeatures(image_path)
 
-    # predict with CCA
-    tag_vector = cca_object.predict(img_vector)
+    # calculate score in latent space
+    scores = {}
+    cats = {}
+    for idx in test_tag_feat.keys():
+        annIds = coco.getAnnIds(imgIds=idx)
+        anns = coco.loadAnns(annIds)
+        for ann in anns:
+            instance = coco.loadCats(ann['category_id'])[0]['name']
+            if instance in cats.keys():
+                np.vstack((cats[instance],test_tag_feat[idx]))
+            else:
+                cats[instance] = test_tag_feat[idx]
+    for key in cats.keys():
+        scores[key] = cca_object.sim_I2T(img_vector,cats[key])
 
-    # search tag
-    scores = search_tag(tag_vector,test_tag_feat, coco)
+    softmax(scores)
 
     return scores
 
-def image2tag_quantitative(img_vector, cca_object, test_tag_feat, coco):
-    # predict with CCA
-    tag_vector = cca_object.predict(img_vector)
+def perso_image2tag_quantitative(image_vector, cca_object, test_tag_feat, coco):
+    # calculate score in latent space
+    scores = {}
+    cats = {}
+    for idx in test_tag_feat.keys():
+        annIds = coco.getAnnIds(imgIds=idx)
+        anns = coco.loadAnns(annIds)
+        for ann in anns:
+            instance = coco.loadCats(ann['category_id'])[0]['name']
+            if instance in cats.keys():
+                np.vstack((cats[instance],test_tag_feat[idx]))
+            else:
+                cats[instance] = test_tag_feat[idx]
+    for key in cats.keys():
+        scores[key] = cca_object.sim_I2T(image_vector,cats[key])
 
-    # search tag
-    scores = search_tag(tag_vector,test_tag_feat, coco)
+    softmax(scores)
 
     return scores

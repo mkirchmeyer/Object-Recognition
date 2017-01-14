@@ -89,7 +89,8 @@ def main():
     def t2i(tag):
         return T2I.tag2image(tag,cca_object,glove_object,test_img)
 
-    tags = ["dog", "person", "zebra", "blue car", "car", "frisbee", "skateboard", "dining table", "dolphin", "tennis", "running"]
+    #tags = ["dog", "person", "zebra", "blue car", "car", "frisbee", "skateboard", "dining table", "dolphin", "tennis", "running"]
+    tags = ["antelope", "skiing", "snow", "rain", "shoes", "donut", "food", "face", "sport"]
 
     for tag in tags:
         print "retrieving from tag: "+tag

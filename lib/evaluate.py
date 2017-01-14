@@ -6,7 +6,6 @@ from pycocotools.coco import COCO
 
 # threshold sampling
 thr_array = np.linspace(0,1,100)
-
 # input is a dictionary id:score
 def normalize_output(scores):
     total = 0
@@ -37,10 +36,18 @@ def id2tag(coco,ids):
         annIds = coco.getAnnIds(imgIds=idx)
         anns = coco.loadAnns(annIds)
         strings = []
+        name_area = {}
         for ann in anns:
             instance = coco.loadCats(ann['category_id'])[0]['name']
-            strings.append(instance)
-        result[idx] = strings
+            name_area[instance] = ann['area']
+
+        name_area = dict(sorted(name_area.iteritems(), key=operator.itemgetter(1), reverse=True))
+
+        result[idx] = name_area.keys()
+        #for ann in anns:
+        #    instance = coco.loadCats(ann['category_id'])[0]['name']
+        #    strings.append(instance)
+        #result[idx] = strings
     return result
 
 def tag2id(coco,ids):
@@ -88,7 +95,7 @@ def evaluateROCT2I(coco,tag2img,GT):
         sys.stdout.flush()
 
         # check images of this instance exist in the test set
-        if not len({idx:categories for idx, categories in GT.iteritems() if (query in categories)}):
+        if not len({idx:categories for idx, categories in GT.iteritems() if (query in categories[:2])}):
             print "no \'%s\' images in test set" % query
             continue
 
@@ -104,11 +111,11 @@ def evaluateROCT2I(coco,tag2img,GT):
             filtered_result = {idx: score for idx, score in result.iteritems() if score >= thr}
             for idx in filtered_result.keys():
                 pos_array[thr_index] += 1
-                if query in GT[idx]:
+                if query in GT[idx][:2]:
                     true_pos_array[thr_index] += 1
 
         precision[query] = true_pos_array / pos_array
-        recall[query] = true_pos_array / len({idx:categories for idx, categories in GT.iteritems() if (query in categories)})
+        recall[query] = true_pos_array / len({idx:categories for idx, categories in GT.iteritems() if (query in categories[:2])})
         mAP[query] = computeAP(precision[query],recall[query])
         counter += 1
     print '\nComputed all queries!'
@@ -148,6 +155,8 @@ def evaluatePrecisionI2T(coco,img2tag,test_img,GT):
     imgsNames = [img['file_name'] for img in imgs]
     imgsIds = [img['id'] for img in imgs]
 
+    true_pos = 0
+
     # loop over possible queries
     for k in range(len(imgsIds)):
         query = imgsIds[k]
@@ -166,15 +175,15 @@ def evaluatePrecisionI2T(coco,img2tag,test_img,GT):
         score = result.values()
         index = np.argsort(score)
         top_cat = []
-        for i in range(10):
+        for i in range(5):
             top_cat.append(cats[index[len(index)-1-i]])
 
-        true_pos = 0
         for cat in top_cat:
             if query in GT[cat]:
                 true_pos += 1
+                break
 
-        precision[query] = float(true_pos) / len(test_img)
+    precision = float(true_pos) / len(test_img)
 
     print '\nComputed all queries!'
 

@@ -32,6 +32,9 @@ def parseArguments():
     parser.add_argument('path_to_test_word_feat',
         type=str, help="path to test word features (.npy)")
 
+    parser.add_argument('path_to_cca',
+        type=str, help="path to pretrained cca object")
+
     parser.add_argument('path_to_glove',
         type=str, help="path to glove vectors (.txt)")
 
@@ -47,7 +50,7 @@ def parseArguments():
     #     type=str, help="input tag")
 
     parser.add_argument("-i",
-        type=str, help="input image path")
+       type=str, help="input image path")
 
     args = parser.parse_args()
     return args
@@ -59,6 +62,7 @@ def main():
     path_to_train_word_feat = args.path_to_train_word_feat
     path_to_test_img_feat = args.path_to_test_img_feat
     path_to_test_word_feat = args.path_to_test_word_feat
+    path_to_cca = args.path_to_cca
     path_to_glove = args.path_to_glove
     output_folder = args.o
     title = args.t
@@ -81,42 +85,45 @@ def main():
     test_word = np.load(path_to_test_word_feat).item()
     test_img = np.load(path_to_test_img_feat).item()
 
+    print "creating CCA instance"
+    cca_params = np.load(path_to_cca).item()
+    print cca_params["W"].shape
+    print cca_params["D"].shape
+    print cca_params["d1"]
+    cca_object  = cca.perso_cca(cca_params["S"],cca_params["S_D"],cca_params["D"],cca_params["W"],cca_params["d1"])
+
     # create COCO API instance
     coco = COCO(args.coco_json_annotation)
 
+    # test run on dummy tag
     print "running evaluation ..."
     if method == 'T2I':
-        print "creating CCA instance"
-        cca_object = cca.cca(train_img, train_word, 2)
         # get coco test images ground truth categories
         ids = test_img.keys()
         GT = evaluate.id2tag(coco,ids)
         print "creating glove instance"
         glove_object = glove.glove(path_to_glove)
         def t2i(tag):
-            return T2I.tag2image(tag,cca_object,glove_object,test_img)
+            return T2I.perso_tag2image(tag,cca_object,glove_object,test_img)
         precision, recall, mAP = evaluate.evaluateROCT2I(coco,t2i,GT)
-        print mAP
-        plot_curves(precision,recall,mAP,output_folder,'Precision/Recall Curves T2I.eps',title=title)
+
     elif method == 'I2T':
-        print "creating CCA instance"
-        cca_object = cca.cca(train_word, train_img, 2)
-        # get coco test images ground truth categories
         if query_image_path == "empty":
             ids = test_word.keys()
             GT = evaluate.tag2id(coco,ids)
             def i2t(img_vector):
-                return T2I.image2tag_quantitative(img_vector,cca_object,test_word,coco)
+                return T2I.perso_image2tag_quantitative(img_vector,cca_object,test_word,coco)
             precision = evaluate.evaluatePrecisionI2T(coco,i2t,test_img,GT)
             print precision
         else:
             print "creating cnn instance"
             cnn_object = cnn.cnn()
-            result = T2I.image2tag_qualitative(query_image_path,cca_object,cnn_object,test_word, coco)
+            result = T2I.perso_image2tag_qualitative(query_image_path,cca_object,cnn_object,test_word, coco)
             T2I.display_top_tag(result, 5)
 
-def plot_curves(precision,recall,mAP,output_folder,output_name,title):
+def plot_curves(precision,recall,mAP,output_folder,output_name,title='Precision/Recall curves'):
     best_instances = dict(sorted(mAP.iteritems(), key=operator.itemgetter(1), reverse=True)[:5])
+    worst_instances = dict(sorted(mAP.iteritems(), key=operator.itemgetter(1), reverse=True)[-5:])
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -132,6 +139,21 @@ def plot_curves(precision,recall,mAP,output_folder,output_name,title):
     for key in best_instances.keys():
         plt.plot(recall[key],precision[key],label='%s: %.3f mAP'%(key,best_instances[key]))
 
+    for key in worst_instances.keys():
+        plt.plot(recall[key],precision[key],label='%s: %.3f mAP'%(key,worst_instances[key]),ls='--')
+
+    # take the mean
+    precisions = np.array(precision.values())
+    recalls = np.array(recall.values())
+
+
+    precision_mean = np.sum(precisions,axis=0) / len(precisions)
+    recall_mean = np.sum(recalls,axis=0) / len(recalls)
+
+    mean_mAP = evaluate.computeAP(precision_mean,recall_mean)
+
+    plt.plot(recall_mean,precision_mean,label='%s: %.3f mAP' %("MEAN",mean_mAP),color='r',lw=5)
+
     # Shrink current axis by 20%
     plt.tight_layout()
     box = ax.get_position()
@@ -142,6 +164,7 @@ def plot_curves(precision,recall,mAP,output_folder,output_name,title):
 
     plt.savefig(os.path.join(output_folder,output_name))
     print "Figure saved at %s" % os.path.join(output_folder,output_name)
+
 
 def plot_ROC(precision,recall,title='ROC',output_folder='output',output_name='figure'):
     plt.figure()
